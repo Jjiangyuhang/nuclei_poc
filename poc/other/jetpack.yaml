@@ -1,59 +1,50 @@
-id: jetpack
+id: wordpress-jetpack
 
 info:
-  name: >
-    Jetpack <= 3.7.1 - Stored Cross-Site Scripting
-  author: topscoder
-  severity: high
-  description: >
-    
+  name: Jetpack – WP Security, Backup, Speed, & Growth Detection
+  author: ricardomaia
+  severity: info
   reference:
-    - https://github.com/topscoder/nuclei-wordfence-cve
-    - https://www.wordfence.com/threat-intel/vulnerabilities/id/a1c731b9-8862-4140-b5e8-58132113e22c?source=api-scan
-  classification:
-    cvss-metrics: 
-    cvss-score: 
-    cve-id: 
+    - https://wordpress.org/plugins/jetpack/
   metadata:
-    fofa-query: "wp-content/plugins/jetpack/"
-    google-query: inurl:"/wp-content/plugins/jetpack/"
-    shodan-query: 'vuln:'
-  tags: cve,wordpress,wp-plugin,jetpack,high
+    max-request: 1
+    plugin_namespace: jetpack
+    wpscan: https://wpscan.com/plugin/jetpack
+  tags: tech,wordpress,wp-plugin,top-100,top-200
 
 http:
   - method: GET
-    redirects: true
-    max-redirects: 3
     path:
       - "{{BaseURL}}/wp-content/plugins/jetpack/readme.txt"
 
+    payloads:
+      last_version: helpers/wordpress/plugins/jetpack.txt
+
     extractors:
       - type: regex
-        name: version
         part: body
-        group: 1
         internal: true
+        name: internal_detected_version
+        group: 1
         regex:
-          - "(?mi)Stable tag: ([0-9.]+)"
+          - '(?i)Stable.tag:\s?([\w.]+)'
 
       - type: regex
-        name: version
         part: body
+        name: detected_version
         group: 1
         regex:
-          - "(?mi)Stable tag: ([0-9.]+)"
+          - '(?i)Stable.tag:\s?([\w.]+)'
 
-    matchers-condition: and
+    matchers-condition: or
     matchers:
-      - type: status
-        status:
-          - 200
-
-      - type: word
-        words:
-          - "jetpack"
-        part: body
-
       - type: dsl
+        name: "outdated_version"
         dsl:
-          - compare_versions(version, '<= 3.7.1')
+          - compare_versions(internal_detected_version, concat("< ", last_version))
+
+      - type: regex
+        part: body
+        regex:
+          - '(?i)Stable.tag:\s?([\w.]+)'
+# digest: 4a0a0047304502206d3ad56eb0cb94f9181e52702471bcdb569805488d581cfa7f3e8738b858563b0221009652cb8340b961750515b675eadef9aa0b186a51248564179b3393e6188e31ed:922c64590222798bb761d5b6d8e72950
